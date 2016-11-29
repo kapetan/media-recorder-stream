@@ -18,7 +18,7 @@ function createRecordStream (media, opts) {
   rs.destroy = function (err) {
     if (rs.destroyed) return
     rs.destroyed = true
-    if (rs.recorder) rs.recorder.stop()
+    if (rs.recorder.state !== 'inactive') rs.recorder.stop()
     if (err) rs.emit('error', err)
     rs.emit('close')
     rs.recorder = null
@@ -26,9 +26,6 @@ function createRecordStream (media, opts) {
   }
 
   rs.stop = function () {
-    rs.once('data', function () {
-      rs.push(null)
-    })
     rs.recorder.stop()
   }
 
@@ -46,6 +43,8 @@ function createRecordStream (media, opts) {
     var index = top++
 
     r.addEventListener('loadend', function () {
+      if (rs.destroyed) return
+
       var buf = Buffer(new Uint8Array(r.result))
       var i = index - btm
 
@@ -56,6 +55,7 @@ function createRecordStream (media, opts) {
         btm++
         rs.push(next)
       }
+      if (rs.recorder.state === 'inactive' && top === btm) rs.push(null)
     })
 
     r.readAsArrayBuffer(blob)
