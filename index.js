@@ -26,7 +26,7 @@ function createRecordStream (media, opts) {
   }
 
   rs.stop = function () {
-    rs.recorder.stop()
+    if (!rs.destroyed && rs.recorder.state !== 'inactive') rs.recorder.stop()
   }
 
   rs.media = media
